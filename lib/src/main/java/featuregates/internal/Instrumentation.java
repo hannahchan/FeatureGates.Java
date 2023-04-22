@@ -19,6 +19,6 @@ class Instrumentation {
             .setDescription("measures the duration of feature gate executions")
             .build();
 
-    void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable, InstrumentType instrumentType) {
+    static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable, InstrumentType instrumentType) {
     }
 }
