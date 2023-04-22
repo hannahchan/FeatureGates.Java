@@ -1,9 +1,8 @@
 package featuregates.internal;
 
+import featuregates.InstrumentType;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
-
-import featuregates.InstrumentType;
 
 class Instrumentation {
 
@@ -19,6 +18,7 @@ class Instrumentation {
             .setDescription("measures the duration of feature gate executions")
             .build();
 
-    static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable, InstrumentType instrumentType) {
+    static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable,
+            InstrumentType instrumentType) {
     }
 }
