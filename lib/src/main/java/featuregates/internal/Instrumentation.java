@@ -39,24 +39,24 @@ class Instrumentation {
             throw exception;
         } finally {
             // TODO: Set span status to `featureGateException`.
-
-            // TODO: Record measurement with tags.
-            long elapsedNanoseconds = System.nanoTime() - startNanoTime;
-            recordMeasurement(instrumentType, elapsedNanoseconds, createAttributes(featureGateKey, featureGateState, featureGateException));
+            recordMeasurement(instrumentType, System.nanoTime() - startNanoTime,
+                    createAttributes(featureGateKey, featureGateState, featureGateException));
         }
     }
 
-    private static Attributes createAttributes(String featureGateKey, FeatureGateState featureGateState, boolean featureGateException)
-    {
+    private static Attributes createAttributes(String featureGateKey, FeatureGateState featureGateState,
+            boolean featureGateException) {
         return Attributes
                 .builder()
                 .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_KEY, featureGateKey)
-                .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_STATE, featureGateState == FeatureGateState.OPENED ? "opened" : "closed")
+                .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_STATE,
+                        featureGateState == FeatureGateState.OPENED ? "opened" : "closed")
                 .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_EXCEPTION, featureGateException ? "true" : "false")
                 .build();
     }
 
-    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds, Attributes attributes) {
+    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds,
+            Attributes attributes) {
         switch (instrumentType) {
 
             case COUNTER:
