@@ -45,15 +45,15 @@ class Instrumentation {
         }
     }
 
-    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds)
-    {
-        switch (instrumentType)
-        {
+    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds) {
+        switch (instrumentType) {
+
             case COUNTER:
                 EXECUTION_COUNTER.add(1);
                 break;
 
             case HISTOGRAM:
+                // TODO: Check unit of measurements here.
                 EXECUTION_DURATION_HISTOGRAM.record(TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds));
                 break;
 
