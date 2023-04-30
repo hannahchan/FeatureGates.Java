@@ -20,5 +20,22 @@ class Instrumentation {
 
     static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable,
             InstrumentType instrumentType) {
+
+        boolean featureGateException = false;
+
+        try {
+            if (runnable == null) {
+                return;
+            }
+
+            runnable.run();
+        } catch (RuntimeException exception) {
+            featureGateException = true;
+            // TODO: Record exception in span.
+            throw exception;
+        } finally {
+            // TODO: Set span status to `featureGateException`.
+            // TODO: Record measurement with tags.
+        }
     }
 }
