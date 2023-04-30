@@ -7,7 +7,7 @@ import io.opentelemetry.api.metrics.LongCounter;
 
 class Instrumentation {
 
-    private static final Long NANOSECONDS_IN_A_MILLISECOND = 1_000_000L;
+    private static final double NANOSECONDS_IN_A_MILLISECOND = 1_000_000L;
 
     private static final LongCounter EXECUTION_COUNTER = Library.METER
             .counterBuilder("feature.gate.executions")
@@ -57,14 +57,14 @@ class Instrumentation {
                 .build();
     }
 
-    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds,
+    private static void recordMeasurement(InstrumentType instrumentType, double elapsedNanoseconds,
             Attributes attributes) {
         switch (instrumentType) {
             case COUNTER:
                 EXECUTION_COUNTER.add(1, attributes);
                 break;
             case HISTOGRAM:
-                EXECUTION_DURATION_HISTOGRAM.record((double) elapsedNanoseconds / NANOSECONDS_IN_A_MILLISECOND,
+                EXECUTION_DURATION_HISTOGRAM.record(elapsedNanoseconds / NANOSECONDS_IN_A_MILLISECOND,
                         attributes);
                 break;
             default:
