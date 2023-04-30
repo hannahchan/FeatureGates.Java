@@ -1,13 +1,13 @@
 package featuregates.internal;
 
-import java.util.concurrent.TimeUnit;
-
 import featuregates.InstrumentType;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
 
 class Instrumentation {
+
+    private static final Long NANOSECONDS_IN_A_MILLISECOND = 1_000_000L;
 
     private static final LongCounter EXECUTION_COUNTER = Library.METER
             .counterBuilder("feature.gate.executions")
@@ -64,8 +64,8 @@ class Instrumentation {
                 EXECUTION_COUNTER.add(1, attributes);
                 break;
             case HISTOGRAM:
-                // TODO: Check unit of measurements here.
-                EXECUTION_DURATION_HISTOGRAM.record(TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds), attributes);
+                EXECUTION_DURATION_HISTOGRAM.record((double) elapsedNanoseconds / NANOSECONDS_IN_A_MILLISECOND,
+                        attributes);
                 break;
             default:
                 break;
