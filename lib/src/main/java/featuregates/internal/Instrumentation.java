@@ -1,5 +1,7 @@
 package featuregates.internal;
 
+import java.util.concurrent.TimeUnit;
+
 import featuregates.InstrumentType;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
@@ -22,6 +24,7 @@ class Instrumentation {
             InstrumentType instrumentType) {
 
         boolean featureGateException = false;
+        long startNanoTime = System.nanoTime();
 
         try {
             if (runnable == null) {
@@ -35,7 +38,27 @@ class Instrumentation {
             throw exception;
         } finally {
             // TODO: Set span status to `featureGateException`.
+
             // TODO: Record measurement with tags.
+            long elapsedNanoseconds = System.nanoTime() - startNanoTime;
+            recordMeasurement(instrumentType, elapsedNanoseconds);
+        }
+    }
+
+    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds)
+    {
+        switch (instrumentType)
+        {
+            case COUNTER:
+                EXECUTION_COUNTER.add(1);
+                break;
+
+            case HISTOGRAM:
+                EXECUTION_DURATION_HISTOGRAM.record(TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds));
+                break;
+
+            default:
+                break;
         }
     }
 }
