@@ -39,15 +39,17 @@ class Instrumentation {
             throw exception;
         } finally {
             // TODO: Set span status to `featureGateException`.
-            recordMeasurement(instrumentType, System.nanoTime() - startNanoTime,
-                    createAttributes(featureGateKey, featureGateState, featureGateException));
+
+            long elapsedNanoseconds = System.nanoTime() - startNanoTime;
+            Attributes attributes = createAttributes(featureGateKey, featureGateState, featureGateException);
+
+            recordMeasurement(instrumentType, elapsedNanoseconds, attributes);
         }
     }
 
     private static Attributes createAttributes(String featureGateKey, FeatureGateState featureGateState,
             boolean featureGateException) {
-        return Attributes
-                .builder()
+        return Attributes.builder()
                 .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_KEY, featureGateKey)
                 .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_STATE,
                         featureGateState == FeatureGateState.OPENED ? "opened" : "closed")
@@ -58,16 +60,13 @@ class Instrumentation {
     private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds,
             Attributes attributes) {
         switch (instrumentType) {
-
             case COUNTER:
                 EXECUTION_COUNTER.add(1, attributes);
                 break;
-
             case HISTOGRAM:
                 // TODO: Check unit of measurements here.
                 EXECUTION_DURATION_HISTOGRAM.record(TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds), attributes);
                 break;
-
             default:
                 break;
         }
