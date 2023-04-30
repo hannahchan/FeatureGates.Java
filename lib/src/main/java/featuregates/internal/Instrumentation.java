@@ -3,6 +3,7 @@ package featuregates.internal;
 import java.util.concurrent.TimeUnit;
 
 import featuregates.InstrumentType;
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
 
@@ -41,20 +42,30 @@ class Instrumentation {
 
             // TODO: Record measurement with tags.
             long elapsedNanoseconds = System.nanoTime() - startNanoTime;
-            recordMeasurement(instrumentType, elapsedNanoseconds);
+            recordMeasurement(instrumentType, elapsedNanoseconds, createAttributes(featureGateKey, featureGateState, featureGateException));
         }
     }
 
-    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds) {
+    private static Attributes createAttributes(String featureGateKey, FeatureGateState featureGateState, boolean featureGateException)
+    {
+        return Attributes
+                .builder()
+                .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_KEY, featureGateKey)
+                .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_STATE, featureGateState == FeatureGateState.OPENED ? "opened" : "closed")
+                .put(SemanticConventions.ATTRIBUTE_FEATURE_GATE_EXCEPTION, featureGateException ? "true" : "false")
+                .build();
+    }
+
+    private static void recordMeasurement(InstrumentType instrumentType, long elapsedNanoseconds, Attributes attributes) {
         switch (instrumentType) {
 
             case COUNTER:
-                EXECUTION_COUNTER.add(1);
+                EXECUTION_COUNTER.add(1, attributes);
                 break;
 
             case HISTOGRAM:
                 // TODO: Check unit of measurements here.
-                EXECUTION_DURATION_HISTOGRAM.record(TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds));
+                EXECUTION_DURATION_HISTOGRAM.record(TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds), attributes);
                 break;
 
             default:
