@@ -4,6 +4,10 @@ import featuregates.InstrumentType;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 
 class Instrumentation {
 
@@ -24,28 +28,49 @@ class Instrumentation {
 
     static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable,
             InstrumentType instrumentType) {
-
         boolean featureGateException = false;
+        Span span = startSpan(featureGateKey, featureGateState);
         long startNanoTime = System.nanoTime();
 
-        try {
+        try (Scope scope = span.makeCurrent()) {
             if (runnable == null) {
                 return;
             }
 
             runnable.run();
+
         } catch (RuntimeException exception) {
             featureGateException = true;
-            // TODO: Record exception in span.
+            span.recordException(exception);
             throw exception;
+
         } finally {
-            // TODO: Set span status to `featureGateException`.
+            recordSpanStatus(span, featureGateException);
 
             long elapsedNanoseconds = System.nanoTime() - startNanoTime;
             Attributes attributes = createAttributes(featureGateKey, featureGateState, featureGateException);
-
             recordMeasurement(instrumentType, elapsedNanoseconds, attributes);
+
+            span.end();
         }
+    }
+
+    private static Span startSpan(String featureGateKey, FeatureGateState featureGateState) {
+        return Library.TRACER.spanBuilder("feature.gate.execution")
+                .setSpanKind(SpanKind.INTERNAL)
+                .setAttribute(SemanticConventions.ATTRIBUTE_FEATURE_GATE_KEY, featureGateKey)
+                .setAttribute(SemanticConventions.ATTRIBUTE_FEATURE_GATE_STATE,
+                        featureGateState == FeatureGateState.OPENED ? "opened" : "closed")
+                .startSpan();
+    }
+
+    private static void recordSpanStatus(Span span, boolean featureGateException) {
+        if (featureGateException) {
+            span.setStatus(StatusCode.ERROR, "An uncaught exception occurred during feature gate execution.");
+            return;
+        }
+
+        span.setStatus(StatusCode.OK);
     }
 
     private static Attributes createAttributes(String featureGateKey, FeatureGateState featureGateState,
