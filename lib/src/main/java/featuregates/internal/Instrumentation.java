@@ -1,6 +1,8 @@
 package featuregates.internal;
 
 import featuregates.InstrumentType;
+import featuregates.interfaces.Action;
+import featuregates.interfaces.Function;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
@@ -26,18 +28,44 @@ class Instrumentation {
             .setDescription("measures the duration of feature gate executions")
             .build();
 
-    static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Runnable runnable,
+    static void recordExecution(String featureGateKey, FeatureGateState featureGateState, Action action,
             InstrumentType instrumentType) {
         boolean featureGateException = false;
         Span span = startSpan(featureGateKey, featureGateState);
         long startNanoTime = System.nanoTime();
 
         try (Scope scope = span.makeCurrent()) {
-            if (runnable == null) {
+            if (action == null) {
                 return;
             }
 
-            runnable.run();
+            action.execute();
+
+        } catch (RuntimeException exception) {
+            featureGateException = true;
+            span.recordException(exception);
+            throw exception;
+
+        } finally {
+            recordSpanStatus(span, featureGateException);
+
+            long elapsedNanoseconds = System.nanoTime() - startNanoTime;
+            Attributes attributes = createAttributes(featureGateKey, featureGateState, featureGateException);
+            recordMeasurement(instrumentType, elapsedNanoseconds, attributes);
+
+            span.end();
+        }
+    }
+
+    static <TResult> TResult recordExecution(String featureGateKey, FeatureGateState featureGateState,
+            Function<TResult> function,
+            InstrumentType instrumentType) {
+        boolean featureGateException = false;
+        Span span = startSpan(featureGateKey, featureGateState);
+        long startNanoTime = System.nanoTime();
+
+        try (Scope scope = span.makeCurrent()) {
+            return function.execute();
 
         } catch (RuntimeException exception) {
             featureGateException = true;
