@@ -5,9 +5,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import featuregates.InstrumentType;
+import featuregates.interfaces.Action;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 class InstrumentationTest {
@@ -15,10 +17,14 @@ class InstrumentationTest {
     @MethodSource("featureGateStateToInstrumentationType")
     void when_RecordingExecution_Expect_Recorded(FeatureGateState featureGateState, InstrumentType instrumentType) {
         // Arrange
+        AtomicReference<String> result = new AtomicReference<String>(null);
+        Action action = () -> result.set("Action executed!");
 
         // Act
+        Instrumentation.recordExecution("myFeatureGateKey", featureGateState, action, instrumentType);
 
         // Assert
+        assertEquals("Action executed!", result.get());
     }
 
     private static Stream<Arguments> featureGateStateToInstrumentationType() {
