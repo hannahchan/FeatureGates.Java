@@ -13,8 +13,4 @@ class Library {
     static final Meter METER = GlobalOpenTelemetry.getMeter(NAME);
 
     static final Tracer TRACER = GlobalOpenTelemetry.getTracer(NAME, VERSION);
-
-    public boolean someLibraryMethod() {
-        return true;
-    }
 }

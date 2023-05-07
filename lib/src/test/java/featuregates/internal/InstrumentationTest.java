@@ -1,13 +1,14 @@
 package featuregates.internal;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class InstrumentationTest {
-    @Test
-    void someLibraryMethodReturnsTrue() {
-        Library classUnderTest = new Library();
-        assertTrue(classUnderTest.someLibraryMethod(), "someLibraryMethod should return 'true'");
+    @ParameterizedTest
+    @ValueSource(strings = {"a", "b", "c"})
+    void someLibraryMethodReturnsTrue(String test) {
+        assertNotEquals(test.length(), 0);
     }
 }
