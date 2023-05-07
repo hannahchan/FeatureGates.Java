@@ -13,9 +13,7 @@ import java.util.stream.Stream;
 class InstrumentationTest {
     @ParameterizedTest
     @MethodSource("featureGateStateToInstrumentationType")
-    void when_RecordingExecution_Expect_Recorded(String test) {
-        assertNotEquals(test.length(), 0);
-
+    void when_RecordingExecution_Expect_Recorded(FeatureGateState featureGateState, InstrumentType instrumentType) {
         // Arrange
 
         // Act
